@@ -23,7 +23,7 @@ public final class GameServer extends KcpServer {
         channelConfig.setAckNoDelay(false);
 
         InetSocketAddress address;
-        if (Configuration.GAME.bindAddress.equals("")) {
+        if (Configuration.GAME.bindAddress.isEmpty()) {
             address = new InetSocketAddress(Configuration.GAME.bindPort);
         } else {
             address = new InetSocketAddress(

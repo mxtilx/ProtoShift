@@ -1,7 +1,8 @@
 import sys
 
-from os import listdir, rmdir, mkdir
+from os import listdir, mkdir
 from os.path import exists, splitext
+import shutil
 
 from packetList import AbilityInvokeMap, CombatTypeMap
 
@@ -10,7 +11,7 @@ OUTPUT_PACKET_DIR = "..\\..\\src\\main\\java\\emu\\protoshift\\server\\packet\\"
 OUTPUT_INJECTER_DIR = OUTPUT_PACKET_DIR + "injecter\\"
 
 if exists(OUTPUT_INJECTER_DIR):
-    rmdir(OUTPUT_INJECTER_DIR)
+    shutil.rmtree(OUTPUT_INJECTER_DIR)
 mkdir(OUTPUT_INJECTER_DIR)
 
 if len(sys.argv) > 1 and sys.argv[1] == "1":
@@ -53,7 +54,7 @@ public final class PacketHandler {
                 // Packet sanity check
                 int const1 = packet.readUnsignedShort();
                 if (const1 != 0x4567) {
-                    ProtoShift.getLogger().error("Bad Data Package Received from " + (isFromServer ? "server" : "client") + ": got " + const1 + " ,expect 0x4567\n" + Utils.bytesToHex(bytes));
+                    ProtoShift.getLogger().error("Bad Data Package Received from " + (isFromServer ? "server" : "client") + ": got " + const1 + " ,expect 0x4567\\n" + Utils.bytesToHex(bytes));
                     break; // Bad packet
                 }
                 // Data
@@ -68,7 +69,7 @@ public final class PacketHandler {
                 // Sanity check #2
                 int const2 = packet.readUnsignedShort();
                 if (const2 != 0x89ab) {
-                    ProtoShift.getLogger().error("Bad Data Package Received " + (isFromServer ? "server" : "client") + ": got " + const2 + " ,expect 0x89ab\n" + Utils.bytesToHex(bytes));
+                    ProtoShift.getLogger().error("Bad Data Package Received " + (isFromServer ? "server" : "client") + ": got " + const2 + " ,expect 0x89ab\\n" + Utils.bytesToHex(bytes));
                     break; // Bad packet
                 }
                 // Handle
@@ -170,6 +171,8 @@ import emu.protoshift.net.proto.PrivateChatRspOuterClass;
 import emu.protoshift.net.proto.PullPrivateChatRspOuterClass;
 import emu.protoshift.net.proto.PullRecentChatRspOuterClass;
 
+import emu.protoshift.net.proto.ChatInfoOuterClass;
+
 import emu.protoshift.net.packet.BasePacket;
 import emu.protoshift.net.packet.PacketOpcodes;
 
@@ -192,7 +195,7 @@ public class HandleChat {
                 switch (req.getContentCase()) {
                     case TEXT -> {
                         packet.setData(PrivateChatNotifyOuterClass.PrivateChatNotify.newBuilder()
-                                .setChatInfo(emu.protoshift.net.proto.ChatInfoOuterClass.ChatInfo.newBuilder()
+                                .setChatInfo(ChatInfoOuterClass.ChatInfo.newBuilder()
                                         .setTime((int) new Date().getTime())
                                         .setToUid(Configuration.CONSOLE.consoleUid)
                                         .setUid(session.getUid())
@@ -203,7 +206,7 @@ public class HandleChat {
                     }
                     case ICON -> {
                         packet.setData(PrivateChatNotifyOuterClass.PrivateChatNotify.newBuilder()
-                                .setChatInfo(emu.protoshift.net.proto.ChatInfoOuterClass.ChatInfo.newBuilder()
+                                .setChatInfo(ChatInfoOuterClass.ChatInfo.newBuilder()
                                         .setTime((int) new Date().getTime())
                                         .setToUid(Configuration.CONSOLE.consoleUid)
                                         .setUid(session.getUid())
@@ -221,7 +224,7 @@ public class HandleChat {
                 session.send(packet);
 
                 packet.setData(PrivateChatNotifyOuterClass.PrivateChatNotify.newBuilder()
-                        .setChatInfo(emu.protoshift.net.proto.ChatInfoOuterClass.ChatInfo.newBuilder()
+                        .setChatInfo(ChatInfoOuterClass.ChatInfo.newBuilder()
                                 .setTime((int) new Date().getTime())
                                 .setToUid(session.getUid())
                                 .setUid(Configuration.CONSOLE.consoleUid)
@@ -259,7 +262,7 @@ public class HandleChat {
         ProtoShift.getLogger().debug("PullPrivateChatRsp injected");
         if (session.isOnHandlePullConsoleChat()) {
             var rsp = PullPrivateChatRspOuterClass.PullPrivateChatRsp.newBuilder()
-                    .addChatInfo(emu.protoshift.net.proto.ChatInfoOuterClass.ChatInfo.newBuilder()
+                    .addChatInfo(ChatInfoOuterClass.ChatInfo.newBuilder()
                             .setTime((int) new Date().getTime())
                             .setToUid(session.getUid())
                             .setUid(Configuration.CONSOLE.consoleUid)
@@ -275,7 +278,7 @@ public class HandleChat {
         var rsp = PullRecentChatRspOuterClass.PullRecentChatRsp.newBuilder();
         try {
             rsp.mergeFrom(payload);
-            rsp.addChatInfo(emu.protoshift.net.proto.ChatInfoOuterClass.ChatInfo.newBuilder()
+            rsp.addChatInfo(ChatInfoOuterClass.ChatInfo.newBuilder()
                     .setTime((int) new Date().getTime())
                     .setToUid(session.getUid())
                     .setUid(Configuration.CONSOLE.consoleUid)

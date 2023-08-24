@@ -72,6 +72,7 @@ public final class PacketHandler {
         try {
             var new_payload = Handle.preHandle(session, opcode, payload);
 
+            opcode.type = opcode.type == 1 ? 2 : 1;
             var packet = new BasePacket(header, opcode, encryptType);
             packet.setData(new_payload);
             session.send(packet);
