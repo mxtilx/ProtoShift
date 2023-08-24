@@ -51,29 +51,43 @@ def generatePython(cmdid):
         s += '"' + cmdid[i] + '",'
     return s[:-1]
 
-# id:name
-oldpath=f"..\\..\\proto\\{sys.argv[1]}\\"
-newpath=f"..\\..\\proto\\{sys.argv[2]}\\"
 
-newcmdid1, oldcmdid1 = readCmdidCsv(
-    f"{oldpath}cmdid.csv"
-), readCmdidCsv(f"{newpath}cmdid.csv")
-newcmdid2, oldcmdid2 = readCmdidJson(
-    f"{oldpath}cmdid.json"
-), readCmdidJson(f"{newpath}cmdid.json")
-newcmdid3, oldcmdid3 = readPacketIdJson(
-    f"{oldpath}packetIds.json"
-), readCmdidJson(f"{newpath}packetIds.json")
+if sys.argv[1] == sys.argv[2]:
+    protopath = f"..\\..\\proto\\{sys.argv[1]}\\"
 
-newcmdid = newcmdid1 if newcmdid1 else newcmdid2
-oldcmdid = oldcmdid1 if oldcmdid1 else oldcmdid2
+    cmdid1 = readCmdidCsv(f"{protopath}cmdid.csv")
+    cmdid2 = readCmdidJson(f"{protopath}cmdid.json")
+    cmdid3 = readPacketIdJson(f"{protopath}packetIds.json")
 
-newcmdid = newcmdid if newcmdid else newcmdid3
-oldcmdid = oldcmdid if oldcmdid else oldcmdid3
+    cmdid = cmdid1 if cmdid1 else cmdid2
+    cmdid = cmdid if cmdid else cmdid3
 
-if not (newcmdid and oldcmdid):
-    print("cmdid.csv or packetIds.json not found")
-    exit(1)
+    if not cmdid:
+        print("cmdid.csv, cmdid.json or packetIds.json not found")
+        exit(1)
+else:
+    oldpath = f"..\\..\\proto\\{sys.argv[1]}\\"
+    newpath = f"..\\..\\proto\\{sys.argv[2]}\\"
+
+    newcmdid1, oldcmdid1 = readCmdidCsv(f"{oldpath}cmdid.csv"), readCmdidCsv(
+        f"{newpath}cmdid.csv"
+    )
+    newcmdid2, oldcmdid2 = readCmdidJson(f"{oldpath}cmdid.json"), readCmdidJson(
+        f"{newpath}cmdid.json"
+    )
+    newcmdid3, oldcmdid3 = readPacketIdJson(f"{oldpath}packetIds.json"), readCmdidJson(
+        f"{newpath}packetIds.json"
+    )
+
+    newcmdid = newcmdid1 if newcmdid1 else newcmdid2
+    oldcmdid = oldcmdid1 if oldcmdid1 else oldcmdid2
+
+    newcmdid = newcmdid if newcmdid else newcmdid3
+    oldcmdid = oldcmdid if oldcmdid else oldcmdid3
+
+    if not (newcmdid and oldcmdid):
+        print("cmdid.csv, cmdid.json or packetIds.json not found")
+        exit(1)
 
 
 with open(
@@ -92,29 +106,42 @@ public class PacketOpcodes {
         this.value = value;
         this.type = type;
     }
-    
+"""
+        + (
+            """
+    public static class Opcodes{
+"""
+            + generateJava(cmdid)
+            + """
+    }
+"""
+            if sys.argv[1] == sys.argv[2]
+            else """
     public static class newOpcodes{
 """
-        + generateJava(newcmdid)
-        + """
+            + generateJava(newcmdid)
+            + """
     }
 
     public static class oldOpcodes{
 """
-        + generateJava(oldcmdid)
-        + """
+            + generateJava(oldcmdid)
+            + """
     }
+"""
+        )
+        + """
 }
 """
     )
 
-with open("..\\protojson2java\\cmdIdList.py", "w") as file:
-    file.write(
-        "newcmdList=["
-        + generatePython(newcmdid)
-        + "]"
-        + "\r\r"
-        + "oldcmdList=["
-        + generatePython(oldcmdid)
-        + "]"
-    )
+if sys.argv[1] != sys.argv[2]:
+    with open("..\\protojson2java\\cmdIdList.py", "w") as file:
+        file.write(
+            "newcmdList=["
+            + generatePython(newcmdid)
+            + "]\r\r"
+            + "oldcmdList=["
+            + generatePython(oldcmdid)
+            + "]"
+        )
