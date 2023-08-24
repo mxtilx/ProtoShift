@@ -4,6 +4,7 @@ import emu.protoshift.ProtoShift;
 
 import emu.protoshift.config.Configuration;
 
+import emu.protoshift.server.packet.PacketHandler;
 import kcp.highway.ChannelConfig;
 import kcp.highway.KcpServer;
 
@@ -32,7 +33,7 @@ public final class GameServer extends KcpServer {
         }
 
         // Initialize packet handlers.
-        GameServerPacketHandler.init();
+        PacketHandler.init();
 
         // Initialize KCP server.
         this.init(GameSessionManager.getListener(), channelConfig, address);

@@ -1,51 +1,18 @@
-package emu.protoshift.server.game;
+package emu.protoshift.server.packet;
 
 import emu.protoshift.ProtoShift;
 import emu.protoshift.config.Configuration;
 import emu.protoshift.net.packet.*;
+import emu.protoshift.server.game.GameSession;
 import emu.protoshift.server.packet.injecter.Handle;
 import emu.protoshift.utils.Crypto;
 import emu.protoshift.utils.Utils;
+
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
-import org.reflections.Reflections;
 
-import java.util.HashMap;
-import java.util.Map;
-
-public final class GameServerPacketHandler {
-    public static final Map<Integer, PacketHandler> newHandlers = new HashMap<>();
-    public static final Map<Integer, PacketHandler> oldHandlers = new HashMap<>();
-
+public final class PacketHandler {
     public static void init() {
-        Reflections reflections = new Reflections("emu.protoshift.server.packet");
-
-        for (var obj : reflections.getSubTypesOf(PacketHandler.class)) {
-            registerPacketHandler(obj);
-        }
-
-        // Debug
-        ProtoShift.getLogger().info("Registered newHandlers " + newHandlers.size() + " " + PacketHandler.class.getSimpleName() + "s");
-        ProtoShift.getLogger().info("Registered oldHandlers " + oldHandlers.size() + " " + PacketHandler.class.getSimpleName() + "s");
-    }
-
-    public static void registerPacketHandler(Class<? extends PacketHandler> handlerClass) {
-        try {
-            Opcodes opcode = handlerClass.getAnnotation(Opcodes.class);
-
-            if (opcode == null || opcode.value() <= 0)
-                return;
-
-            PacketHandler packetHandler = handlerClass.getDeclaredConstructor().newInstance();
-
-            if (opcode.type() == 1) {
-                newHandlers.put(opcode.value(), packetHandler);
-            } else {
-                oldHandlers.put(opcode.value(), packetHandler);
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
     }
 
     public static void handlePacket(GameSession session, byte[] bytes, boolean isFromServer) {
@@ -102,19 +69,12 @@ public final class GameServerPacketHandler {
             ProtoShift.getLogger().debug(Utils.bytesToHex(payload));
         }
 
-        PacketHandler handler = (opcode.type == 1 ? newHandlers.get(opcode.value) : oldHandlers.get(opcode.value));
-
         try {
             var new_payload = Handle.preHandle(session, opcode, payload);
 
-            if (handler != null) {
-                try {
-                    handler.handle(session, header, new_payload, encryptType);
-                } catch (Exception ex) {
-                    ex.printStackTrace();
-                }
-            } else ProtoShift.getLogger()
-                    .error("packet (" + opcode.value + ", " + opcode.type + "): " + PacketOpcodesUtil.getOpcodeName(opcode) + " don't have handler!");
+            var packet = new BasePacket(header, opcode, encryptType);
+            packet.setData(new_payload);
+            session.send(packet);
 
         } catch (IllegalStateException ignored) {
             ProtoShift.getLogger()
